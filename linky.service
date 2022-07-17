@@ -1,0 +1,14 @@
+[Unit]
+Description=Python service fetching Linky and putting data into MySQL
+After=network-online.target
+After=mariadb.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/usr/bin/python3 /srv/linky/main.py
+WorkingDirectory=/srv/linky/
+
+[Install]
+WantedBy=multi-user.target

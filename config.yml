@@ -1,0 +1,7 @@
+database:
+  server: 127.0.0.1
+  name: linky
+  user: linky
+  password: mypassword
+device:
+  file: /dev/ttyS0
