@@ -70,8 +70,13 @@ def test_db_connection(server, user, password, name):
     if stream_exists == 0 or dailies_exists == 0:
         log.info("Database schema is not there, creating it...")
         try:
-            cr.execute("CREATE TABLE `dailies` (`clock` date NOT NULL, `BASE_diff` int(11) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;")
-            cr.execute("CREATE TABLE `stream` (`clock` datetime NOT NULL, `BASE` int(11) NOT NULL, `PAPP` int(11) NOT NULL, `BASE_diff` int(11) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;")
+            cr.execute("CREATE TABLE `dailies` (`id` int(10) UNSIGNED NOT NULL,`clock` date NOT NULL,`BASE_diff` int(11) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;")
+            cr.execute("CREATE TABLE `stream` (`id` int(20) UNSIGNED NOT NULL,`clock` datetime NOT NULL,`BASE` int(11) NOT NULL,`PAPP` int(11) NOT NULL,`BASE_diff` int(11) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;")
+            cr.execute("ALTER TABLE `dailies` ADD PRIMARY KEY (`id`), ADD KEY `clock` (`clock`);")
+            cr.execute("ALTER TABLE `stream` ADD PRIMARY KEY (`id`), ADD KEY `clock` (`clock`);")
+            cr.execute("ALTER TABLE `dailies` MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;")
+            cr.execute("ALTER TABLE `stream` MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;")
+            db.commit()
         except MySQLdb._exceptions.OperationalError:
             log.critical('Something went wrong while trying to create database schema:', exc_info=True)
             print('Something went wrong while trying to create database schema. See logs for more info.', file=sys.stderr)
@@ -110,18 +115,22 @@ def close_db(db):
     db.close()
 
 
-def insert_stream(db, cr, BASE, PAPP):
+def insert_stream(config, db, cr, BASE, PAPP):
     """
     Insert a record in the stream table
 
     Args:
+        config (dict): Loaded config from yaml file
         db (type): MySQLdb database object
         cr (type): MySQLdb cursor object
         BASE (int): Linky BASE value (Wh meter)
         PAPP (int): Linky PAPP value (current VA power)
     """
     # generating time
-    now = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    if config.get('use_utc', False):
+        now = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     # retrieving previous BASE and calculating BASE_diff
     cr.execute("SELECT BASE FROM stream ORDER BY clock DESC LIMIT 1;")
@@ -134,15 +143,16 @@ def insert_stream(db, cr, BASE, PAPP):
         BASE_diff = BASE-int(previous)
 
     # inserting records
-    cr.execute(f"INSERT INTO stream VALUES ('{now}', {BASE}, {PAPP}, {BASE_diff});")
+    cr.execute(f'INSERT INTO stream VALUES (NULL, %(now)s, %(BASE)s, %(PAPP)s, %(BASE_diff)s);', {"now": now, "BASE": BASE, "PAPP": PAPP, "BASE_diff": BASE_diff})
     db.commit()
 
 
-def insert_dailies(db, cr, BASE):
+def insert_dailies(config, db, cr, BASE):
     """
     Inserts a record in the dailies table
 
     Args:
+        config (dict): Loaded config from yaml file
         db (type): MySQLdb database object
         cr (type): MySQLdb cursor object
         BASE (int): Linky BASE value (Wh meter)
@@ -157,9 +167,12 @@ def insert_dailies(db, cr, BASE):
     else:
         diff = BASE-previous
     
-    now = datetime.datetime.utcnow().strftime('%Y-%m-%d')
+    if config.get('use_utc', False):
+        now = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d')
+    else:
+        now = datetime.datetime.now().strftime('%Y-%m-%d')
 
-    cr.execute(f'INSERT INTO dailies VALUES ("{now}", "{diff}")')
+    cr.execute(f'INSERT INTO dailies VALUES (NULL, %(now)s, %(diff)s)', {"now": now, "diff": diff})
     db.commit()
 
 

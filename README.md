@@ -30,6 +30,11 @@ Mettez le fichier `linky.service` dans `/etc/systemd/system` (sur Debian ; l'emp
 Éditez le fichier selon l'endroit où vous mettrez les scripts, et l'utilisateur que vous utiliserez.
 
 
+## Configuration
+
+La configuration se fait dans le fichier config.yml. La documentation sur ce fichier est dans CONFIG.md.
+
+
 ## Démarrage
 
 ```

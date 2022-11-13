@@ -3,5 +3,5 @@ database:
   name: linky
   user: linky
   password: mypassword
-device:
-  file: /dev/ttyS0
+device: /dev/ttyS0
+use_utc: True

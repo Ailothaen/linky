@@ -17,7 +17,7 @@ log.debug('Loading config...')
 config = linky.load_config()
 log.debug(f'Config loaded! Values: {config}')
 
-terminal = linky.setup_serial(config['device']['file'])
+terminal = linky.setup_serial(config['device'])
 
 # Trying to connect to db server and creating schema if not exists
 linky.test_db_connection(config['database']['server'], config['database']['user'], config['database']['password'], config['database']['name'])
@@ -27,14 +27,22 @@ linky.test_db_connection(config['database']['server'], config['database']['user'
 # Main loop                     #
 # ----------------------------- #
 
-current_loop_day = datetime.datetime.now(datetime.timezone.utc).day
-previous_loop_day = datetime.datetime.now(datetime.timezone.utc).day
+if config.get('use_utc', False):
+    current_loop_day = datetime.datetime.now(datetime.timezone.utc).day
+    previous_loop_day = datetime.datetime.now(datetime.timezone.utc).day
+else:
+    current_loop_day = datetime.datetime.now().day
+    previous_loop_day = datetime.datetime.now().day 
 
 while True:
     log.debug("Cycle begins")
     data_BASE = None
     data_PAPP = None
-    current_loop_day = datetime.datetime.now(datetime.timezone.utc).day
+
+    if config.get('use_utc', False):
+        current_loop_day = datetime.datetime.now(datetime.timezone.utc).day
+    else:
+        current_loop_day = datetime.datetime.now().day
 
     # Now beginning to read data from Linky
     log.debug("Opening terminal...")
@@ -63,12 +71,16 @@ while True:
     # first record of the day? generating dailies
     if current_loop_day != previous_loop_day:
         log.debug(f"First record of the day! Inserting dailies record.")
-        linky.insert_dailies(db, cr, data_BASE)
-    previous_loop_day = datetime.datetime.utcnow().day
+        linky.insert_dailies(config, db, cr, data_BASE)
+
+    if config.get('use_utc', False):
+        previous_loop_day = datetime.datetime.now(datetime.timezone.utc).day
+    else:
+        previous_loop_day = datetime.datetime.now().day
 
     # inserting values
     log.debug("Inserting stream record")
-    linky.insert_stream(db, cr, data_BASE, data_PAPP)
+    linky.insert_stream(config, db, cr, data_BASE, data_PAPP)
 
     log.debug("Cycle ends, sleeping for 60 seconds")
     time.sleep(60)
