@@ -1,7 +1,28 @@
+# Paramètres de la base de données
 database:
   server: 127.0.0.1
   name: linky
   user: linky
   password: mypassword
+
+# Type de contrat d'électricité.
+# Valeurs possibles : "base" (contrat de base), "hchp" (heures creuses/pleines), "tempo" (Tempo), "ejp" (EJP).
+# Selon le type de contrat, les colonnes de la base de données ne sont pas les mêmes, lisez le README pour en savoir plus.
+contract: base
+
+# Mode de téléinformation du Linky ("historique" ou "standard").
+# On peut le voir sur le compteur (rubrique "MODE TIC")
+mode: historique
+
+# Fichier représentant la connexion série (dans /dev, souvent /dev/ttyS0 ou /dev/ttyAMA0)
 device: /dev/ttyS0
-use_utc: True
+
+# Si "true", l'heure et la date seront enregistrés en UTC (temps universel). Si "false", cela sera en heure locale
+# (attention, car cela peut provoquer des heures en double, notamment aux jours de changement d'heure)
+utc: true
+
+# Si "true", plus de logs seront disponibles
+debug: false
+
+# Toutes les combien de secondes on récupère les informations (optionnel, par défaut 60) 
+interval: 60

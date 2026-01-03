@@ -7,7 +7,7 @@ After=mariadb.service
 Type=simple
 User=root
 Group=root
-ExecStart=/usr/bin/python3 /srv/linky/main.py
+ExecStart=/srv/linky/run.sh
 WorkingDirectory=/srv/linky/
 
 [Install]
